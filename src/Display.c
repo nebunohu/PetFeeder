@@ -3,8 +3,10 @@
 #include "MainProgram.h"
 #include "Display.h"
 
-extern union Struct_PORTD PORTD;
-extern union Struct_PORTE PORTE;
+extern union Struct_PORTA PORTA;
+extern union Struct_PORTB PORTB;
+//extern union Struct_PORTD PORTD;
+//extern union Struct_PORTE PORTE;
 
 uint8_t ALPH[256] = {
 	0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
@@ -25,15 +27,15 @@ uint8_t ALPH[256] = {
 	0x70, 0x63, 0xBF, 0x79, 0xE4, 0x78, 0xE5, 0xC0, 0xC1, 0xE6, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7};
 
 void LCDInit(void) {
-	PORTD.bit.E = 0; 
-	GPIOD->ODR = PORTD.all;
+	PORTB.bit.E = 0; 
+	GPIOB->ODR = PORTB.all;
 	usDelay(20000);
 
 //При необходимости настроить здесь шину данных на вывод
-	PORTD.bit.R_W = 0;
-	PORTD.bit.AO = 0;
+	PORTB.bit.RW = 0;
+	PORTB.bit.AO = 0;
 	
-	GPIOD->ODR = PORTD.all;
+	GPIOB->ODR = PORTB.all;
 	//Установка типа интерфейса (8бит) (0х03 - старший полубайт команды 0х30) - в начале ВСЕГДА переключаем индикатор в 8-ми битный режим работы 
 	
 	sendHalfByte(0x03);
@@ -63,20 +65,20 @@ void LCDInit(void) {
 
 void strobe(void) {
 	usDelay(10);	
-	PORTD.bit.E = 1;
-	GPIOD->ODR = PORTD.all;
+	PORTB.bit.E = 1;
+	GPIOB->ODR = PORTB.all;
 	usDelay(10);	
-	PORTD.bit.E = 0;
-	GPIOD->ODR = PORTD.all;
+	PORTB.bit.E = 0;
+	GPIOB->ODR = PORTB.all;
 	usDelay(10);	
 }
 
 void sendHalfByte(uint8_t hByte) {
-	PORTE.bit.DB7 = (hByte & 0x08) ? 1 : 0;
-	PORTE.bit.DB6 = (hByte & 0x04) ? 1 : 0;
-	PORTE.bit.DB5 = (hByte & 0x02) ? 1 : 0;
-	PORTE.bit.DB4 = (hByte & 0x01) ? 1 : 0;
-	GPIOE->ODR = PORTE.all;
+	PORTA.bit.DB7 = (hByte & 0x08) ? 1 : 0;
+	PORTA.bit.DB6 = (hByte & 0x04) ? 1 : 0;
+	PORTA.bit.DB5 = (hByte & 0x02) ? 1 : 0;
+	PORTA.bit.DB4 = (hByte & 0x01) ? 1 : 0;
+	GPIOA->ODR = PORTA.all;
 	strobe();
 }
 void sendByte(uint8_t byte) {
@@ -114,67 +116,68 @@ void eDelay(void)
 	while(counter--);
 
 	return;*/
-	uint8_t del = 80;
-	TIM1->CR1 = 0x00000000;
-	TIM1->CNT = 0x00000000;
-	TIM1->PSC = 0x00000001;
-	TIM1->SR = 0;
+	uint8_t del = 8;
+	TIM2->CR1 = 0x00000000;
+	TIM2->CNT = 0x00000000;
+	TIM2->PSC = 0x00000000;
+	TIM2->SR = 0;
 	
-	TIM1->ARR = del;
-	TIM1->CR1 = 0x00000001;
-	while (!(TIM1->SR & 0x1))		//åñëè òàéìåð îòñ÷èòàë óñòàâêó
+	TIM2->ARR = del;
+	TIM2->CR1 = 0x00000001;
+	while (!(TIM2->SR & 0x1))		//åñëè òàéìåð îòñ÷èòàë óñòàâêó
 		{
 
 		}
-	TIM1->CR1 = 0x00000000;
+	TIM2->CR1 = 0x00000000;
 	return;
 }
 
 void commandToDisplay(uint8_t command)
 {static uint8_t tmrCnt = 0;
+	uint32_t tempReg = 0;
 	
-	PORTD.bit.AO = 0;
-	PORTD.bit.R_W = 0;
-	PORTD.bit.E = 0;
+	PORTB.bit.AO = 0;
+	PORTB.bit.RW = 0;
+	PORTB.bit.E = 0;
 	
-	GPIOD->ODR = PORTD.all;
+	GPIOB->ODR = PORTB.all;
 	
 	//
 	//sendByte(command);
 	//---------------------------------
-	PORTE.bit.DB7 = (command & 0x80) ? 1 : 0;
-	PORTE.bit.DB6 = (command & 0x40) ? 1 : 0;
-	PORTE.bit.DB5 = (command & 0x20) ? 1 : 0;
-	PORTE.bit.DB4 = (command & 0x10) ? 1 : 0;
-	GPIOE->ODR = PORTE.all;
+	PORTA.bit.DB7 = (command & 0x80) ? 1 : 0;
+	PORTA.bit.DB6 = (command & 0x40) ? 1 : 0;
+	PORTA.bit.DB5 = (command & 0x20) ? 1 : 0;
+	PORTA.bit.DB4 = (command & 0x10) ? 1 : 0;
+	GPIOA->ODR = PORTA.all;
 	
 	usDelay(1);	// 20ns
 	
-	PORTD.bit.E = 1;
-	GPIOD->ODR = PORTD.all;
+	PORTB.bit.E = 1;
+	GPIOB->ODR = PORTB.all;
 	
 	usDelay(1);	// 250ns
 		
-	PORTD.bit.E = 0;
-	GPIOD->ODR = PORTD.all;
+	PORTB.bit.E = 0;
+	GPIOB->ODR = PORTB.all;
 	
 	usDelay(1);	// 120ns
 	
-	PORTE.bit.DB7 = (command & 0x08) ? 1 : 0;
-	PORTE.bit.DB6 = (command & 0x04) ? 1 : 0;
-	PORTE.bit.DB5 = (command & 0x02) ? 1 : 0;
-	PORTE.bit.DB4 = (command & 0x01) ? 1 : 0;
-	GPIOE->ODR = PORTE.all;
+	PORTA.bit.DB7 = (command & 0x08) ? 1 : 0;
+	PORTA.bit.DB6 = (command & 0x04) ? 1 : 0;
+	PORTA.bit.DB5 = (command & 0x02) ? 1 : 0;
+	PORTA.bit.DB4 = (command & 0x01) ? 1 : 0;
+	GPIOA->ODR = PORTA.all;
 	
 	usDelay(1);	// 120ns
 	
-	PORTD.bit.E = 1;
-	GPIOD->ODR = PORTD.all;
+	PORTB.bit.E = 1;
+	GPIOB->ODR = PORTB.all;
 	
 	usDelay(1);	// 250ns
 		
-	PORTD.bit.E = 0;
-	GPIOD->ODR = PORTD.all;
+	PORTB.bit.E = 0;
+	GPIOB->ODR = PORTB.all;
 	//---------------------------------
 	
 	usDelay(1);	// 20ns
@@ -186,14 +189,14 @@ void commandToDisplay(uint8_t command)
 	if (command == 1)
 	{
 		//òàéìåð 3 ìñ
-		TIM1->PSC = 0x00000008;
-		TIM1->ARR = 0xC350;
+		TIM1->PSC = 0x00000000;
+		TIM1->ARR = 0x5DC0;
 	}
 	else
 	{
 		//òàéìåð 100 ìêñ
-		TIM1->PSC = 0x00000001;
-		TIM1->ARR = 0x1D4C;
+		TIM1->PSC = 0x00000000;
+		TIM1->ARR = 0x0320;
 			
 	}
 
@@ -204,19 +207,23 @@ void commandToDisplay(uint8_t command)
 	
 	if (TIM1->CNT > 0) tmrCnt++;
 	
-	PORTD.bit.AO = 0;
-	PORTD.bit.R_W = 1;
-	PORTD.bit.E = 0;
+	PORTB.bit.AO = 0;
+	PORTB.bit.RW = 1;
+	PORTB.bit.E = 0;
 	//GPIO_Lock (GPIOE, 0xFBFF );
-	GPIOE->CRL &= ~(0x03 << 10*2); // óñòàíîâêà 10 áèòà ïîðòà E íà âõîä, ÷òåíèå ôëàãà çàíÿòîñòè
+	tempReg = GPIOA->CRL;
+	tempReg &= ~(0x0F << (7*4)); 
+	tempReg |= (0x08 << (7*4));
+	GPIOA->CRL = tempReg;
+	//GPIOA->CRL &= ~(0x03 << (7*4)); // óñòàíîâêà 10 áèòà ïîðòà E íà âõîä, ÷òåíèå ôëàãà çàíÿòîñòè
 	//GPIO_Lock (GPIOE, 0xFFFF );
 	
-	GPIOD->ODR = PORTD.all;
+	GPIOB->ODR = PORTB.all;
 	
 	usDelay(1);	// 20ns
 // ============================================	
-	PORTD.bit.E = 1;
-	GPIOD->ODR = PORTD.all;
+	PORTB.bit.E = 1;
+	GPIOB->ODR = PORTB.all;
 	eDelay();
 	
 /*	while (GPIOA->ODR & GPIO_IDR_IDR_10)
@@ -228,21 +235,25 @@ void commandToDisplay(uint8_t command)
 		}
 	}*/
 	//while((GPIOE->IDR & GPIO_IDR_IDR_10) > 0) {}
-	while(PORTE.bit.DB7)
+	while(PORTA.bit.DB7)
 	{
-		PORTE.all = GPIOE->IDR;
+		PORTA.all = GPIOA->IDR;
 	}
-	PORTD.bit.E = 0;
-	GPIOD->ODR = PORTD.all;	
-	PORTD.bit.E = 1;
+	PORTB.bit.E = 0;
+	GPIOB->ODR = PORTB.all;	
+	PORTB.bit.E = 1;
 	eDelay();
-	GPIOD->ODR = PORTD.all;
+	GPIOB->ODR = PORTB.all;
 	eDelay();
-	PORTD.bit.E = 0;
+	PORTB.bit.E = 0;
 		
-	GPIOD->ODR = PORTD.all;
+	GPIOB->ODR = PORTB.all;
 	//GPIO_Lock (GPIOE, 0xFBFF );
-	GPIOE->CRL |= (0x01 << 10*2);			// Установка 10 бита порта E на вход
+	//GPIOA->CRL |= (0x01 << (7*4));			// Установка 7 бита порта A на вsход
+	tempReg = GPIOA->CRL;
+	tempReg &= ~(0x0F << (7*4)); 
+	tempReg |= (0x01 << (7*4));
+	GPIOA->CRL = tempReg;
 	//GPIO_Lock (GPIOE, 0xFFFF );
 	TIM1->CR1 = 0x00000000;
 		
@@ -255,50 +266,50 @@ void symbolIndication (uint8_t symbolCode, uint8_t symbolCounter)
 {
 	if (symbolCounter > 20) return;
 	
-	PORTD.bit.AO = 1;
-	PORTD.bit.R_W = 0;
-	PORTD.bit.E = 0;
+	PORTB.bit.AO = 1;
+	PORTB.bit.RW = 0;
+	PORTB.bit.E = 0;
 	
 	//sendByte(command);
 	//------------------------------------
-	PORTE.bit.DB7 = (symbolCode & 0x80) ? 1 : 0;
-	PORTE.bit.DB6 = (symbolCode & 0x40) ? 1 : 0;
-	PORTE.bit.DB5 = (symbolCode & 0x20) ? 1 : 0;
-	PORTE.bit.DB4 = (symbolCode & 0x10) ? 1 : 0;
+	PORTA.bit.DB7 = (symbolCode & 0x80) ? 1 : 0;
+	PORTA.bit.DB6 = (symbolCode & 0x40) ? 1 : 0;
+	PORTA.bit.DB5 = (symbolCode & 0x20) ? 1 : 0;
+	PORTA.bit.DB4 = (symbolCode & 0x10) ? 1 : 0;
 
-	GPIOD->ODR = PORTD.all;
-	GPIOE->ODR = PORTE.all;
+	GPIOA->ODR = PORTA.all;
+	GPIOB->ODR = PORTB.all;
 	
 
 	usDelay(1);//20ns
 
-	PORTD.bit.E = 1;
-	GPIOD->ODR = PORTD.all;
+	PORTB.bit.E = 1;
+	GPIOB->ODR = PORTB.all;
 
 	usDelay(1);//250ns
 
-	PORTD.bit.E = 0;
-	GPIOD->ODR = PORTD.all;
+	PORTB.bit.E = 0;
+	GPIOB->ODR = PORTB.all;
 
 
 	usDelay(1);//120ns
 
-	PORTE.bit.DB7 = (symbolCode & 0x08) ? 1 : 0;
-	PORTE.bit.DB6 = (symbolCode & 0x04) ? 1 : 0;
-	PORTE.bit.DB5 = (symbolCode & 0x02) ? 1 : 0;
-	PORTE.bit.DB4 = (symbolCode & 0x01) ? 1 : 0;
+	PORTA.bit.DB7 = (symbolCode & 0x08) ? 1 : 0;
+	PORTA.bit.DB6 = (symbolCode & 0x04) ? 1 : 0;
+	PORTA.bit.DB5 = (symbolCode & 0x02) ? 1 : 0;
+	PORTA.bit.DB4 = (symbolCode & 0x01) ? 1 : 0;
 
-	GPIOE->ODR = PORTE.all;
+	GPIOA->ODR = PORTA.all;
 	
 	usDelay(1);//120ns
 
-	PORTD.bit.E = 1;
-	GPIOD->ODR = PORTD.all;
+	PORTB.bit.E = 1;
+	GPIOB->ODR = PORTB.all;
 	
 	usDelay(1);//250ns
 
-	PORTD.bit.E = 0;
-	GPIOD->ODR = PORTD.all;
+	PORTB.bit.E = 0;
+	GPIOB->ODR = PORTB.all;
 
 	usDelay(1);//20ns
 	//-------------------------------------
@@ -310,16 +321,16 @@ void symbolIndication (uint8_t symbolCode, uint8_t symbolCounter)
 	TIM1->CR1 = 0x00000001;
 	
 
-	GPIOE->CRL &= ~(0x3 << 20); // óñòàíîâêà 11 áèòà ïîðòà E íà âõîä
+	GPIOA->CRL &= ~(0x3 << (7*4)); // óñòàíîâêà 11 áèòà ïîðòà E íà âõîä
 
-	PORTD.bit.AO = 0;
-	PORTD.bit.R_W = 1;
-	GPIOD->ODR = PORTD.all;
+	PORTB.bit.AO = 0;
+	PORTB.bit.RW = 1;
+	GPIOB->ODR = PORTB.all;
 
 	usDelay(1);//20ns
 // ======================================
-	PORTD.bit.E = 1;
-	GPIOD->ODR = PORTD.all;
+	PORTB.bit.E = 1;
+	GPIOB->ODR = PORTB.all;
 
 /*	while (GPIOA->ODR & (0x1 << 3))
 	{
@@ -329,12 +340,12 @@ void symbolIndication (uint8_t symbolCode, uint8_t symbolCounter)
 			break;
 		}
 	}*/
-	while((GPIOA->IDR & GPIO_IDR_IDR10) > 0)
+	while((GPIOA->IDR & GPIO_IDR_IDR7) > 0)
 	{}
-	PORTD.bit.E = 0;
-	GPIOD->ODR = PORTD.all;
+	PORTB.bit.E = 0;
+	GPIOB->ODR = PORTB.all;
 
-	GPIOE->CRL |= (0x1 << 20);			// óñòàíîâêà 11 áèòà ïîðòà e íà âûõîä
+	GPIOA->CRL |= (0x1 << (7*4));			// óñòàíîâêà 11 áèòà ïîðòà e íà âûõîä
 
 	usDelay(1);//20ns
 		

@@ -2,6 +2,32 @@
 #define __Main_H
 #include <stdint.h>
 
+union Struct_PORTA { // Порт A
+	uint32_t all;
+	struct {
+		uint32_t DB0				: 1;
+		uint32_t DB1				: 1;
+		uint32_t DB2				: 1;
+		uint32_t DB3				: 1;
+		uint32_t DB4				: 1;
+		uint32_t DB5				: 1;
+		uint32_t DB6				: 1;
+		uint32_t DB7				: 1;
+		uint32_t reserved		: 24;
+	} bit;
+};
+
+union Struct_PORTB { // Порт A
+	uint32_t all;
+	struct {
+		uint32_t reserved0	: 3;
+		uint32_t AO					: 1;
+		uint32_t RW					: 1;
+		uint32_t E					: 1;
+		uint32_t reserved1	: 26;
+	} bit;
+};
+
 union Struct_PORTD { // Порт D
 	uint32_t all;
 	struct {
