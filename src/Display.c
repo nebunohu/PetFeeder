@@ -59,6 +59,8 @@ void LCDInit(void) {
 	usDelay(90);
 	sendByte(0x06);
 	usDelay(90);
+	sendByte(0x58);
+	usDelay(90);
 	 
 	commandToDisplay(CLEAR_DISPLAY);
 }
@@ -136,6 +138,8 @@ void commandToDisplay(uint8_t command)
 {static uint8_t tmrCnt = 0;
 	uint32_t tempReg = 0;
 	
+	PORTB.all = GPIOB->ODR;
+	
 	PORTB.bit.AO = 0;
 	PORTB.bit.RW = 0;
 	PORTB.bit.E = 0;
@@ -212,8 +216,8 @@ void commandToDisplay(uint8_t command)
 	PORTB.bit.E = 0;
 	//GPIO_Lock (GPIOE, 0xFBFF );
 	tempReg = GPIOA->CRL;
-	tempReg &= ~(0x0F << (7*4)); 
-	tempReg |= (0x08 << (7*4));
+	tempReg &= ~((uint32_t)0x0F << (7*4)); 
+	tempReg |= ((uint32_t)0x08 << (7*4));
 	GPIOA->CRL = tempReg;
 	//GPIOA->CRL &= ~(0x03 << (7*4)); // óñòàíîâêà 10 áèòà ïîðòà E íà âõîä, ÷òåíèå ôëàãà çàíÿòîñòè
 	//GPIO_Lock (GPIOE, 0xFFFF );
@@ -251,8 +255,8 @@ void commandToDisplay(uint8_t command)
 	//GPIO_Lock (GPIOE, 0xFBFF );
 	//GPIOA->CRL |= (0x01 << (7*4));			// Установка 7 бита порта A на вsход
 	tempReg = GPIOA->CRL;
-	tempReg &= ~(0x0F << (7*4)); 
-	tempReg |= (0x01 << (7*4));
+	tempReg &=  ~((uint32_t)0x0F << (7*4)); 
+	tempReg |= ((uint32_t)0x01 << (7*4));
 	GPIOA->CRL = tempReg;
 	//GPIO_Lock (GPIOE, 0xFFFF );
 	TIM1->CR1 = 0x00000000;

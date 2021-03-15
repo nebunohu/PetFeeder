@@ -2,28 +2,46 @@
 #include "stm32f10x.h"
 #include "Display.h"
 
+extern uint8_t ALPH[];
+
+mainStruct_TypeDef petFeeder;
+
 uint8_t buttonPoll(void);
 
 void MainProgram(void) {
 	uint32_t tempReg = 0; 
+	uint8_t symbolCode = 0, symbolCounter = 0;
+	char symbol = 0;
+	
 	GPIOA->BSRR |= 0x01;
 	GPIOC->BSRR |= (0x01 << 13);
 	LCDInit();
 	while(1) {
 		msDelay(100);
-		if(GPIOC->ODR && GPIO_ODR_ODR13) {
+		if(GPIOC->ODR & GPIO_ODR_ODR13) {
 			GPIOC->BSRR |= (0x01 << (13+16));
+			petFeeder.FLAGS.bit.render = 1;
 		} else {
 			GPIOC->BSRR |= (0x01 << (13));
+			petFeeder.FLAGS.bit.render = 0;
 		}
 		tempReg = GPIOB->IDR;
-		tempReg &= 0x01;
+		tempReg &= 0x0800;
 		
 		if(!tempReg){//buttonPoll()) {
 			tempReg = 0;
 			GPIOB->BSRR |= (0x01 << 1);
 		} else {
 			GPIOB->BSRR |= (0x01 << (1+16));
+		}
+		
+		if(petFeeder.FLAGS.bit.render) {
+			
+			commandToDisplay(CURSOR_OFF);
+			lineIndication (1, " abcdE", 1);
+			lineIndication (2, " FÐÀhklÄÔ”", 1);
+			commandToDisplay(FIRST_LINE);
+			commandToDisplay(CURSOR_ON);
 		}
 	}
 }

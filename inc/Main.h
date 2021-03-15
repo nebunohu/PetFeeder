@@ -20,11 +20,11 @@ union Struct_PORTA { // Порт A
 union Struct_PORTB { // Порт A
 	uint32_t all;
 	struct {
-		uint32_t reserved0	: 3;
+		uint32_t reserved0	: 12;
 		uint32_t AO					: 1;
 		uint32_t RW					: 1;
 		uint32_t E					: 1;
-		uint32_t reserved1	: 26;
+		uint32_t reserved1	: 12;
 	} bit;
 };
 
